@@ -1,6 +1,6 @@
 ---
 title: "Are we more civilized today?"
-author: "Matti Munk Nielsen"
+author: "Matti Munk Nielsen , Cecilie Lykke Knudsen , Roald Somers , Anne Aslai-Sørensen"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
