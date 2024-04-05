@@ -1,0 +1,73 @@
+---
+title: "Dan Maps"
+author: "Matti Munk Nielsen , Cecilie Lykke Knudsen , Roald Somers , Anne Aslai Sørensen"
+output: html_document
+date: "2024-04-05"
+toc: true
+toc_float: true
+toc_depth: 2
+---
+## The Tasks
+#Task 1: Create a Danish equivalent of AUSmap with esri layers,but call it DANmap
+
+#Task 2: Read in the googlesheet data you and your colleagues populated with data into the DANmap object you created in Task 1.
+
+#Task 3: Can you cluster the points in Leaflet? Google "clustering options in Leaflet"
+
+#Task 4: Look at the map and consider what it is good for and what not.
+
+#Task 5: Find out how to display notes and classifications in the map.
+
+
+## Here we install the packages leaflet and htmlwidget
+```{r}
+# To install Leaflet package, run this command at your R prompt:
+#install.packages("leaflet")
+
+# We will also need this widget to make pretty maps:
+#install.packages("htmlwidget")
+```
+
+
+## This code reads my packages.
+```{r}
+library(tidyverse)
+library(googlesheets4)
+library(leaflet)
+library(htmlwidgets)
+```
+
+## Here we are connecting the danish spreadsheet data to the word places with the function <- and when we added the function range in order for places to fokus on 1 specific collum whih the name DM2023. glimpse() was in order for places to print the data from DM2023 vertically.
+```{r}
+places <- read_sheet("https://docs.google.com/spreadsheets/d/1PlxsPElZML8LZKyXbqdAYeQCDIvDps2McZx1cTVWSzI/edit#gid=1738472414",
+                     range = "DM2023")
+    
+glimpse(places)
+```
+## The code which we have now created has solved both task 1 by creating DanMap with the code DanMap <- leaflet() %>% and we solved task 2 by adding to codes addTiles() %>% addMarkers(lng = places$Longitude, lat = places$Latitude,popup = places$Placename,label = places$Type, which created the distance on the map between markers with the function lng = places$Lontitude and the function lat = places$Latitude.The popup function added the markers and the place names. The function Places and the function label did so we were able to classify the markes.  addtiles() did so that we could connect addmarkerrs() to the program leaflet. We solved task 3 by adding the code clusterOptions = markerClusterOptions()) which allowed us to create cluster points on the map. we wrote DanMap at the end of the code in order to visualise the map. 
+
+```{r}
+DanMap <- leaflet() %>% 
+  addTiles() %>% 
+  addMarkers(lng = places$Longitude, 
+             lat = places$Latitude,
+             popup = places$Placename,
+             label = places$Type,
+             clusterOptions = markerClusterOptions())
+
+DanMap
+```
+## Task 4: Look at the map and consider what it is good for and what not: We will say that the map is good to show where cities and tourist attractions are. The Map however is not perfect, because there are things like population in the cities which the map does not show or how big these cities are, so you might think that one city is bigger than it actually is.
+
+## In Order to add Notes we added the popup function which allowed us to add data from the Dansih spread sheet as markers on the Map. But in order to add text on the markers we used = and the function paste which would allow us to add the data from the Danish Spread sheet in the markers added by the popup function. So after that we wrote in the parenthesis the Data from the Danish spread sheet which we wanted to add to the markers like Placename, Type and Notes. We have therefore solved task 5.
+```{r}
+DanNotes <- leaflet() %>% 
+  addTiles() %>% 
+  addMarkers(lng = places$Longitude, 
+             lat = places$Latitude,
+             popup = paste(places$Placename,"-",places$Type,"- Note:",places$Notes),
+             label = places$Type,
+             clusterOptions = markerClusterOptions())
+DanNotes
+```
+
