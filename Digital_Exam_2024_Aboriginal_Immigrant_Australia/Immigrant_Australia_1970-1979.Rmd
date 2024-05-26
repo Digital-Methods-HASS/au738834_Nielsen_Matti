@@ -1,0 +1,296 @@
+---
+title: "Immigrant Australia 1970-1979"
+author: "Matti Munk Nielsen"
+date: "11 May 2024"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Download
+
+## Library
+```{r}
+library(tidyverse)
+library(tidytext)
+library(ggwordcloud)
+```
+
+## Read the csv.file
+```{r}
+Immigrant_1970_1979 <- read_csv("Immigrant_Australia_1970-1979.csv")
+
+```
+## Show csv.file
+```{r}
+Immigrant_1970_1979
+```
+# Textmining
+
+## Unnest tokens
+Unnest tokens separates individual words from the articles in a column.
+```{r}
+Immigrant_1970_1979_tokens <-Immigrant_1970_1979 %>%
+  unnest_tokens(word,article_text)
+
+Immigrant_1970_1979_tokens
+```
+
+## Count words
+```{r}
+Immigrant_1970_1979_wc <- Immigrant_1970_1979_tokens%>%
+  count(word)%>%
+  arrange(-n)
+```
+
+## Stopwordslist
+A stopwordslist is a list of all the stopwords in all the 100 articles.
+```{r}
+Immigrant_1970_1979_wc
+```
+
+
+## Remove stopwordslist
+```{r}
+Immigrant_1970_1979_stop <- Immigrant_1970_1979_tokens%>%
+  anti_join(stop_words)
+
+Immigrant_1970_1979_stop
+```
+
+## Count words again
+```{r}
+Immigrant_1970_1979_swc <- Immigrant_1970_1979_stop%>%
+  count(word)%>%
+  arrange(-n)
+
+Immigrant_1970_1979_swc
+```
+
+## Show Immigrant 1970 to 1979 swc head
+```{r}
+ Immigrant_1970_1979_swc%>%
+  head(10)
+```
+
+
+## Remove nontext
+```{r}
+Immigrant_1970_1979_no_numeric <- Immigrant_1970_1979_stop%>%
+  filter(is.na(as.numeric(word)))
+```
+## View nontext
+```{r}
+Immigrant_1970_1979_no_numeric
+```
+
+
+## Unique words
+Length counts the rare words in the articles.
+```{r}
+length(unique(Immigrant_1970_1979_no_numeric$word))
+```
+
+## Top 100 words
+Show the 100 most used words in all the 100 articles.
+```{r}
+Immigrant_1970_1979_top100 <- Immigrant_1970_1979_no_numeric%>%
+  count(word)%>%
+  arrange(-n)%>%
+  head(100)
+
+Immigrant_1970_1979_top100
+```
+
+## Cloud
+```{r}
+Immigrant_1970_1979_cloud <- ggplot(data = Immigrant_1970_1979_top100, aes( label = word)) + geom_text_wordcloud() + theme_minimal()
+
+Immigrant_1970_1979_cloud
+```
+
+
+## Customize cloud
+Shows the most frequent used words from the 100 articles where green is most,then yellow and last pink.
+```{r}
+ggplot(data = Immigrant_1970_1979_top100, aes(label = word, size = n)) + 
+  geom_text_wordcloud_area(aes(color = n), shape = "diamond") +
+  scale_size_area(max_size = 12) +
+  scale_color_gradientn(colors = c("pink", "yellow", "green")) +
+  theme_minimal()
+
+```
+
+# Sentiment analysis
+
+## Lexicon afinn
+```{r}
+get_sentiments(lexicon = "afinn")
+```
+
+
+```{r}
+afinn_pos <- get_sentiments("afinn") %>%
+  filter(value %in% c(3,4,5))
+```
+
+
+```{r}
+afinn_pos
+```
+
+
+## Lexicon bing
+```{r}
+get_sentiments(lexicon = "bing")
+
+```
+
+## Lexicon nrc
+```{r}
+get_sentiments(lexicon = "nrc")
+```
+
+
+## Immigrant 1970 to 1979 afinn
+Inner join connects the stopwords column(word) with the afinn column(value).
+```{r}
+Immigrant_1970_1979_afinn <-  Immigrant_1970_1979_stop%>% 
+  inner_join(get_sentiments("afinn"))
+
+Immigrant_1970_1979_afinn
+```
+## Immigrant 1970 to 1979 afinn hist
+Counts the value of Immigrant 1970 to 1979 afinn.
+```{r}
+Immigrant_1970_1979_afinn_hist <- Immigrant_1970_1979_afinn%>% 
+  count(value)
+
+Immigrant_1970_1979_afinn_hist
+```
+
+## Plot immigrant 1970 to 1979 afinn hist
+The x-axis(value) is the sentiment value where negative is shown as minus and positive with no minus and n is the amount of words that has the specific sentiment value from the x-axis(value).
+```{r}
+ggplot(data = Immigrant_1970_1979_afinn_hist, aes(x = value, y = n)) + 
+  geom_col()
+```
+
+
+## Immigrant 1970 to 1979 afinn2
+Here filter removes words that do not have a value on 2.
+```{r}
+Immigrant_1970_1979_afinn2 <- Immigrant_1970_1979_afinn %>% 
+  filter(value == 2)
+```
+
+## Unique 2 words score
+Shows how unique each word is with 1 being the highest.
+```{r}
+unique(Immigrant_1970_1979_afinn2$word)
+```
+
+
+## Count plot Immigrant 1970 to 1979 afinn2 n
+```{r}
+Immigrant_1970_1979_afinn2_n<- Immigrant_1970_1979_afinn2%>% 
+  count(word, sort = TRUE) %>% 
+  mutate(word = fct_reorder(factor(word), n))
+
+Immigrant_1970_1979_afinn2_n
+```
+ 
+## Count and plot graph
+The y-axis are words while the x-axis(n) is the amount of positivity in a word from the y-axis.
+```{r}
+ggplot(data = Immigrant_1970_1979_afinn2_n, aes(x = word, y = n)) +
+  geom_col() +
+  coord_flip()
+```
+
+
+## Summerize sentiment
+```{r}
+Immigrant_1970_1979_summery <- Immigrant_1970_1979_afinn%>% 
+  summarise(mean_score = mean(value), median_score = median(value))
+
+Immigrant_1970_1979_summery
+```
+
+
+## Immigrant 1970 to 1979 nrc
+Inner join connects the stopwords column(word) with the nrc column(sentiment).
+```{r}
+Immigrant_1970_1979_nrc <- Immigrant_1970_1979_stop%>% 
+  inner_join(get_sentiments("nrc"))
+```
+
+
+## Exclude
+Anti join finds all words that do not match two dataframes.
+```{r}
+Immigrant_1970_1979_exclude <- Immigrant_1970_1979_stop %>% 
+  anti_join(get_sentiments("nrc"))
+
+Immigrant_1970_1979_exclude
+```
+
+## Count most exluded
+```{r}
+Immigrant_1970_1979_exclude_n <-  Immigrant_1970_1979_exclude%>% 
+  count(word, sort = TRUE)
+
+Immigrant_1970_1979_exclude_n
+```
+
+## Show Immigrant 1970-1979 exclude n head
+```{r}
+head(Immigrant_1970_1979_exclude_n)
+```
+
+
+## Emplot Immigrant 1970 to 1979 nrc n
+The x-axis(sentiment) is the type of sentiment while the y-axis(n) is the amount of a sentiment from the x-axis.
+```{r}
+Immigrant_1970_1979_nrc_n <- Immigrant_1970_1979_nrc %>% 
+  count(sentiment, sort = TRUE )
+
+ggplot(data = Immigrant_1970_1979_nrc_n, aes(x = sentiment, y = n)) +
+  geom_col()
+```
+
+
+## Count sentiment and word
+There are multiple graphs each divided by a sentiment and each have a x-axis which represents the amount of sentiment to a specific word from the y-axis.
+```{r}
+Immigrant_1970_1979_nrc_n5 <- Immigrant_1970_1979_nrc %>% 
+  count(word,sentiment,sort = TRUE) %>% 
+  group_by(sentiment) %>% 
+  top_n(5) %>% 
+  ungroup()
+
+Immigrant_1970_1979_nrc_gg <- ggplot(data = Immigrant_1970_1979_nrc_n5, aes(x = reorder(word,n), y = n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, ncol = 2, scales = "free") +
+  coord_flip() +
+  theme_minimal() +
+  labs(x = "word" , y = "count")
+
+Immigrant_1970_1979_nrc_gg
+```
+
+
+## Save it
+```{r}
+ggsave(plot = Immigrant_1970_1979_nrc_gg,
+       filename ="figures/ipcc_nrc_sentiment.png", 
+      height = 8,
+      width = 5)
+
+```
+
